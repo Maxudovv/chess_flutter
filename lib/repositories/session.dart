@@ -1,22 +1,22 @@
 // Package imports:
+import 'package:chess_frontend/repositories/auth_repository.dart';
 import 'package:dio/dio.dart';
 
 class Session {
   final Dio _client;
-  final String _sessionId;
-  final String _csrfToken;
+  final AuthRepository _authRepository;
+
+  String get accessToken => _authRepository.accessToken;
 
   Dio get client => _client;
 
-  Session(
-      {required Dio dio, required String sessionId, required String csrfToken})
+  Session({required Dio dio, required AuthRepository authRepository})
       : _client = dio,
-        _sessionId = sessionId,
-        _csrfToken = csrfToken {
+        _authRepository = authRepository {
     _client.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          options.headers["Cookie"] = "sessionId=$_sessionId;csrftoken=$_csrfToken";
+          options.headers["Authorization"] = "Bearer $accessToken";
           return handler.next(options);
         },
       ),

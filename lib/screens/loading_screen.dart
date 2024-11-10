@@ -1,11 +1,14 @@
 import 'package:auto_route/auto_route.dart';
 import 'package:chess_frontend/bloc/auth/auth_cubit.dart';
+import 'package:chess_frontend/routes/guard.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 @RoutePage()
 class LoadingScreen extends StatelessWidget {
-  const LoadingScreen({super.key});
+  final void Function()? onUserReady;
+
+  const LoadingScreen({super.key, this.onUserReady});
 
   Future<void> listen(BuildContext context, AuthState state) async {
     if (state is AuthAuthenticated) {
@@ -17,10 +20,12 @@ class LoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print("Loading screen");
     return Scaffold(
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (context, state) => listen(context, state),
         builder: (context, state) {
+          listen(context, state);
           return const Center(
             child: CircularProgressIndicator(),
           );

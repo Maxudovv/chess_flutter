@@ -2,9 +2,7 @@
 
 // Dart imports:
 import 'dart:convert';
-
-// Flutter imports:
-import 'package:flutter/foundation.dart';
+import 'package:dio/browser.dart';
 
 // Package imports:
 import 'package:dio/dio.dart';
@@ -12,6 +10,8 @@ import 'package:dio/dio.dart';
 import '../constants.dart';
 
 Future<Dio> getDio([Map<String, dynamic>? headers]) async {
+  headers = headers ?? {};
+  headers["Content-type"] = "application/json";
   final dio = Dio(BaseOptions(baseUrl: backendUrl, headers: headers));
   return dio;
 }

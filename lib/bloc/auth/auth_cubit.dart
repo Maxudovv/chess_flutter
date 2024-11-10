@@ -1,5 +1,6 @@
 // Flutter imports:
 import 'package:chess_frontend/repositories/auth_repository.dart';
+import 'package:chess_frontend/routes/guard.dart';
 import 'package:flutter/material.dart';
 
 // Package imports:
@@ -11,12 +12,13 @@ part 'auth_state.dart';
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepository _authRepository;
 
-  AuthCubit(this._authRepository) : super(AuthInitial());
+  AuthCubit({required AuthRepository authRepository}) : _authRepository = authRepository, super(AuthInitial());
 
   Future<void> checkAuthState() async {
-    _authRepository.loadTokens();
+    await _authRepository.loadTokens();
     if (_authRepository.isAuthenticated) {
       emit(AuthAuthenticated());
+      IsUserReady.setValue(true);
     } else {
       emit(AuthUnauthenticated());
     }
