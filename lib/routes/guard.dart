@@ -31,12 +31,7 @@ class UserReadyGuard extends AutoRouteGuard {
         resolver.next();
       } else {
         resolver.redirect(
-          LoadingRoute(
-            onUserReady: () {
-              resolver.next();
-              router.removeLast();
-            },
-          ),
+          const LoadingRoute(),
         );
       }
     }

@@ -1,6 +1,7 @@
 import 'package:chess_frontend/bloc/auth/auth_cubit.dart';
 import 'package:chess_frontend/repositories/auth_repository.dart';
 import 'package:chess_frontend/repositories/dio.dart';
+import 'package:chess_frontend/repositories/rabbitmq.dart';
 import 'package:chess_frontend/repositories/session.dart';
 import 'package:chess_frontend/routes/router.dart';
 import 'package:chess_frontend/screens/game/cubit/game_cubit.dart';
@@ -32,7 +33,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print("Nigga 2");
     return RepositoryProvider(
       create: (context) => AuthRepository(sharedPreferences: sharedPreferences),
       child: BlocProvider(
@@ -45,14 +45,19 @@ class MyApp extends StatelessWidget {
                 dio: _dio,
                 authRepository: context.read<AuthRepository>(),
               ),
-          child: BlocProvider(
-            create: (context) =>
-                GameCubit(
-                  session: context.read<Session>(),
-                ),
-            child: MaterialApp.router(
-              routerConfig: _appRouter.config(),
-              title: 'Труба Admin Panel',
+          child: RepositoryProvider(
+            create: (context) => WebSocketClient(),
+            child: BlocProvider(
+              create: (context) =>
+                  GameCubit(
+                    websocketClient: context.read<WebSocketClient>(),
+                    session: context.read<Session>(),
+                    // rabbitRepository: context.read<RabbitMQ>()
+                  ),
+              child: MaterialApp.router(
+                routerConfig: _appRouter.config(),
+                title: 'Труба Admin Panel',
+              ),
             ),
           ),
         ),

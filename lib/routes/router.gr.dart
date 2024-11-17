@@ -13,21 +13,13 @@ import 'package:chess_frontend/screens/game/play_screen.dart' as _i3;
 import 'package:chess_frontend/screens/game/start_new_game_screen.dart' as _i4;
 import 'package:chess_frontend/screens/loading_screen.dart' as _i1;
 import 'package:chess_frontend/screens/login/login_screen.dart' as _i2;
-import 'package:flutter/material.dart' as _i6;
 
 /// generated route for
 /// [_i1.LoadingScreen]
-class LoadingRoute extends _i5.PageRouteInfo<LoadingRouteArgs> {
-  LoadingRoute({
-    _i6.Key? key,
-    void Function()? onUserReady,
-    List<_i5.PageRouteInfo>? children,
-  }) : super(
+class LoadingRoute extends _i5.PageRouteInfo<void> {
+  const LoadingRoute({List<_i5.PageRouteInfo>? children})
+      : super(
           LoadingRoute.name,
-          args: LoadingRouteArgs(
-            key: key,
-            onUserReady: onUserReady,
-          ),
           initialChildren: children,
         );
 
@@ -36,30 +28,9 @@ class LoadingRoute extends _i5.PageRouteInfo<LoadingRouteArgs> {
   static _i5.PageInfo page = _i5.PageInfo(
     name,
     builder: (data) {
-      final args =
-          data.argsAs<LoadingRouteArgs>(orElse: () => const LoadingRouteArgs());
-      return _i1.LoadingScreen(
-        key: args.key,
-        onUserReady: args.onUserReady,
-      );
+      return const _i1.LoadingScreen();
     },
   );
-}
-
-class LoadingRouteArgs {
-  const LoadingRouteArgs({
-    this.key,
-    this.onUserReady,
-  });
-
-  final _i6.Key? key;
-
-  final void Function()? onUserReady;
-
-  @override
-  String toString() {
-    return 'LoadingRouteArgs{key: $key, onUserReady: $onUserReady}';
-  }
 }
 
 /// generated route for
