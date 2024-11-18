@@ -1,22 +1,20 @@
 import 'dart:async';
 import 'dart:convert';
 
-
 import 'package:chess_frontend/repositories/rabbitmq.dart';
 import 'package:chess_frontend/repositories/session.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chess_board/flutter_chess_board.dart';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 part 'game_state.dart';
 
 class GameCubit extends Cubit<GameState> {
   final Session _session;
   final String _startNewGameUrl = "/game/start";
+  final String _makeMoveUrl = "/game/make_move";
   final WebSocketClient _websocketClient;
-  late StreamSubscription _subscription;
 
   GameCubit(
       {required Session session, required WebSocketClient websocketClient})
@@ -26,16 +24,15 @@ class GameCubit extends Cubit<GameState> {
           status: GameStatus.pending,
           boardController: ChessBoardController(),
           gameId: "",
-        ));
+          colour: true,
+        previousFen: ChessBoardController().getFen()
+        )) {
+    state.boardController.addListener(onBoardChange);
+  }
 
-  Future<void> startNewGame() async {
-    final response =
-        await _session.client.post(_startNewGameUrl, data: {"colour": "black"});
-
-    final gameId = response.data["id"]!;
-
+  void _connectWebsocket(String gameId) {
     _websocketClient.setSubscribeHeaders(gameId);
-    _subscription = _websocketClient.channel.stream.listen(
+    _websocketClient.channel.stream.listen(
           (message) {
         processNewMessage(message);
       },
@@ -43,22 +40,62 @@ class GameCubit extends Cubit<GameState> {
         print("Ошибка: $error");
       },
       onDone: () {
-        print("Соединение закрыто");
+        _connectWebsocket(gameId);
       },
     );
+  }
+
+  Future<void> startNewGame() async {
+    const colour = "black";
+
+    final response =
+        await _session.client.post(_startNewGameUrl, data: {"colour": colour});
+
+
+    final gameId = response.data["id"]!;
+    print(gameId);
+    _connectWebsocket(gameId);
+
 
     emit(state.copyWith(
       status: GameStatus.inProgress,
       gameId: gameId,
+      colour: colour == "white"
     ));
   }
 
+  Future<void> onBoardChange() async {
+    final userColour = state.colour ? Chess.WHITE : Chess.BLACK;
+    if (state.boardController.game.turn == userColour || state.previousFen == state.boardController.getFen()) {
+      return;
+    }
+
+    final lastMoveUci = _getLastMove();
+    await sendMove(lastMoveUci);
+
+    emit(state.copyWith(
+      previousFen: state.boardController.getFen()
+    ));
+  }
+
+  String _getLastMove() {
+    final lastMove = state.boardController.game.history.last.move;
+    return Chess.algebraic(lastMove.from) + Chess.algebraic(lastMove.to);
+  }
+
+  Future<void> sendMove(String moveUci) async {
+    final response = _session.client.post(_makeMoveUrl, data: {
+      "game": state.gameId,
+      "text": moveUci
+    });
+  }
+
   void processNewMessage(dynamic message) {
-    print("NEW MESSAGE");
     final parts = message.split("\n\n");
 
     if (parts.length < 2) {
       print("Некорректное сообщение");
+      return;
     }
 
     final body = parts[1].trim().replaceAll("\x00", "");
@@ -66,14 +103,27 @@ class GameCubit extends Cubit<GameState> {
       return;
     }
     final json = jsonDecode(body);
-    print(json);
-    performEngineMove(json["text"]);
+    if (json["type"] == "move") {
+      performEngineMove(json["text"]);
+    } else if (json["type"] == "finish") {
+      performGameFinish(json["text"]);
+    }
   }
 
   void performEngineMove(String moveUci) {
     final from = moveUci.substring(0, 2);
     final to = moveUci.substring(2);
+    final moves = state.moves;
+    moves.add(moveUci);
+    print(moveUci);
+    emit(state.copyWith(moves: moves));
     state.boardController.makeMove(from: from, to: to);
-    emit(state.copyWith(boardController: state.boardController));
+  }
+
+  void performGameFinish(String text) {
+    emit(state.copyWith(
+      status: GameStatus.finished,
+      finishText: text
+    ));
   }
 }

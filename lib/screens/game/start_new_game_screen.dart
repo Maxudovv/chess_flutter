@@ -21,7 +21,7 @@ class StartNewGameScreen extends StatelessWidget {
                 onPressed: () {
                   context.read<GameCubit>().startNewGame();
                 },
-                child: const Text("Начать игру баля")
+                child: const Text("Начать игру")
             )
         ),
       ),
